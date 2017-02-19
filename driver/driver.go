@@ -37,24 +37,32 @@ func FromSource(source models.Source) (Driver, error) {
 	case models.DriverUnspecified, models.DriverS3:
 		var creds *credentials.Credentials
 
-		if source.AccessKeyID == "" && source.SecretAccessKey == "" {
-			creds = credentials.AnonymousCredentials
-		} else {
-			creds = credentials.NewStaticCredentials(source.AccessKeyID, source.SecretAccessKey, "")
-		}
-
 		regionName := source.RegionName
 		if len(regionName) == 0 {
 			regionName = "us-east-1"
 		}
 
-		awsConfig := &aws.Config{
-			Region:           aws.String(regionName),
-			Credentials:      creds,
-			S3ForcePathStyle: aws.Bool(true),
-			MaxRetries:       aws.Int(maxRetries),
-			DisableSSL:       aws.Bool(source.DisableSSL),
+		if source.AccessKeyID == "" && source.SecretAccessKey == "" {
+			awsConfig := &aws.Config{
+				Region:           aws.String(regionName),
+				S3ForcePathStyle: aws.Bool(true),
+				MaxRetries:       aws.Int(maxRetries),
+				DisableSSL:       aws.Bool(source.DisableSSL),
+			}
+		} else {
+			creds = credentials.NewStaticCredentials(source.AccessKeyID, source.SecretAccessKey, "")
+			awsConfig := &aws.Config{
+				Region:           aws.String(regionName),
+				Credentials:	  creds,
+				S3ForcePathStyle: aws.Bool(true),
+				MaxRetries:       aws.Int(maxRetries),
+				DisableSSL:       aws.Bool(source.DisableSSL),
+			}
 		}
+
+
+
+
 
 		if len(source.Endpoint) != 0 {
 			awsConfig.Endpoint = aws.String(source.Endpoint)
